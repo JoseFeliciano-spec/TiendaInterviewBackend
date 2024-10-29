@@ -32,12 +32,14 @@ export class Task {
     status?: TaskStatus;
     dueDate?: Date;
     userId?: string;
+    id?: string;
   }): Task {
     return new Task({
       title: createTask.title,
       description: createTask.description,
       status: createTask.status,
-      userId: createTask.userId
+      userId: createTask.userId,
+      id: createTask?.id,
     });
   }
 

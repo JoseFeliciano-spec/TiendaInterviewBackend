@@ -134,6 +134,7 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
   async update(task: Task): Promise<any> {
     try {
       const taskData = task.toPrimitives();
+      console.log(taskData);
 
       const updatedTask = await this.taskModel.findByIdAndUpdate(
         taskData.id,

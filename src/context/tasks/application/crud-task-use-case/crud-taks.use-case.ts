@@ -19,7 +19,7 @@ export class TaskUseCases {
   async updateTask(
     dto: CrudTasKDto,
   ): Promise<{ data: PrimitiveTask; message: string; statusCode: number }> {
-    const task = Task.create(dto as any);
+    const task = Task.update(dto as any);
     const updateTaks = await this.taskRepository.update(task);
     return updateTaks;
   }

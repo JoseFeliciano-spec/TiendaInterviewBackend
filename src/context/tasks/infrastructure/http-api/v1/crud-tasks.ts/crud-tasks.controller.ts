@@ -68,12 +68,11 @@ export class TaskController {
     try {
       const existingTask = await this.taskService.getTaskById(id);
 
-      if (existingTask.data.userId !== req.user.sub) {
+      if (existingTask?.userId !== req.user.sub) {
         throw new BadRequestException({
           message: 'No tienes permiso para modificar esta tarea',
         });
       }
-
       return await this.taskService.updateTask({
         ...updateTaskDto,
         id: id,
@@ -93,9 +92,9 @@ export class TaskController {
     try {
       const existingTask = await this.taskService.getTaskById(id);
 
-      if (existingTask.data.userId !== req.user.sub) {
+      if (existingTask?.userId !== req.user.sub) {
         throw new BadRequestException({
-          message: 'No tienes permiso para eliminar esta tarea',
+          message: 'No tienes permiso para modificar esta tarea',
         });
       }
 
