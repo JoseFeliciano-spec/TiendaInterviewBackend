@@ -32,7 +32,9 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
         statusCode: HttpStatus.CREATED,
         data: {
           id: savedTask._id,
+          dueDate: savedTask.dueDate,
           title: savedTask.title,
+          status: savedTask.status,
           description: savedTask.description,
           userId: savedTask.userId,
         },
@@ -78,6 +80,8 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
           title: task.title,
           description: task.description,
           userId: task.userId,
+          status: task.status,
+          dueDate: task.dueDate,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
         })),
@@ -100,6 +104,8 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
         title: task.title,
         description: task.description,
         userId: task.userId,
+        status: task?.status,
+        dueDate: task.dueDate,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
       };
@@ -120,6 +126,8 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
           title: task.title,
           description: task.description,
           userId: task.userId,
+          status: task?.status,
+          dueDate: task.dueDate,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
         })),
@@ -134,7 +142,6 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
   async update(task: Task): Promise<any> {
     try {
       const taskData = task.toPrimitives();
-      console.log(taskData);
 
       const updatedTask = await this.taskModel.findByIdAndUpdate(
         taskData.id,
@@ -159,6 +166,9 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
         data: {
           id: updatedTask._id,
           title: updatedTask.title,
+          status: updatedTask?.status,
+
+          dueDate: updatedTask.dueDate,
           description: updatedTask.description,
           userId: updatedTask.userId,
           updatedAt: updatedTask.updatedAt,
@@ -189,6 +199,8 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
           title: task.title,
           description: task.description,
           userId: task.userId,
+          status: task.status,
+          dueDate: task.dueDate,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
         },

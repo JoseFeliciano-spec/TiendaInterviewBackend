@@ -7,6 +7,7 @@ export interface PrimitiveTask {
   description?: string;
   status?: TaskStatus;
   userId?: string;
+  dueDate?: string;
 }
 
 export class Task {
@@ -17,12 +18,14 @@ export class Task {
     description: string;
     status: TaskStatus;
     userId: string;
+    dueDate: string;
   }): Task {
     return new Task({
       title: createTask.title,
       description: createTask.description,
       status: createTask.status,
       userId: createTask.userId,
+      dueDate: createTask.dueDate,
     });
   }
 
@@ -30,7 +33,7 @@ export class Task {
     title?: string;
     description?: string;
     status?: TaskStatus;
-    dueDate?: Date;
+    dueDate?: string;
     userId?: string;
     id?: string;
   }): Task {
@@ -40,6 +43,7 @@ export class Task {
       status: createTask.status,
       userId: createTask.userId,
       id: createTask?.id,
+      dueDate: createTask.dueDate,
     });
   }
 
@@ -62,6 +66,7 @@ export class Task {
       description: this.attributes.description,
       status: this.attributes.status,
       userId: this.attributes.userId,
+      dueDate: this.attributes.dueDate,
     };
   }
 }

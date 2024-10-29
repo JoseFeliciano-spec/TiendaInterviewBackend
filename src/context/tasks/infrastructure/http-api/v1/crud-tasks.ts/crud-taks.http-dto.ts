@@ -14,6 +14,7 @@ export class CreateTaskDto {
     message: 'El estado debe ser uno de: pending, in-progress, completed',
   })
   status!: TaskStatus;
+  dueDate: string;
 }
 
 export class UpdateTaskDto {
@@ -32,6 +33,7 @@ export class UpdateTaskDto {
     message: 'El estado debe ser uno de: pending, in-progress, completed',
   })
   status!: TaskStatus;
+  dueDate: string;
 }
 
 export class DeleteTaskDto {

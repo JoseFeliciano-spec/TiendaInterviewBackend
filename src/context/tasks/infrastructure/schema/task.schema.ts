@@ -22,6 +22,9 @@ export class TaskMongo {
 
   @Prop({ required: true })
   userId: string;
+
+  @Prop()
+  dueDate?: string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(TaskMongo);

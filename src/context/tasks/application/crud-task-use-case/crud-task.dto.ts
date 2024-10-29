@@ -6,4 +6,5 @@ export interface CrudTasKDto {
   status: TaskStatus;
   userId?: string;
   id?: string;
+  dueDate?: string;
 }
