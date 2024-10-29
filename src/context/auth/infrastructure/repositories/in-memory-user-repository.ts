@@ -43,6 +43,8 @@ export class InMemoryUserRepository extends UserRepository {
       statusCode: HttpStatus.ACCEPTED,
       data: {
         access_token: token,
+        id: savedUser._id.toString(),
+        name: savedUser.name,
         email: savedUser.email,
       },
     };
@@ -80,6 +82,7 @@ export class InMemoryUserRepository extends UserRepository {
       data: {
         access_token: await this.jwtService.signAsync(payload),
         id: user._id.toString(),
+        name: user.name,
         email: user.email,
       },
     };
