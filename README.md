@@ -1,99 +1,144 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Proyecto de Gestión de Tareas en NestJS (FELITAKS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Enlace de la API:** [https://todo-backend-nest-jjq1.onrender.com](https://todo-backend-nest-jjq1.onrender.com)
+**Enlace de la DOCUMENTACIÓN DE SWAGGER:** [https://todo-backend-nest-jjq1.onrender.com](https://todo-backend-nest-jjq1.onrender.com/docs)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Descripción
 
-## Description
+Este proyecto es una API de gestión de tareas construida con **NestJS**, diseñada para ofrecer funcionalidades básicas de creación, actualización, eliminación y consulta de tareas. El objetivo de este sistema es facilitar a los usuarios la organización de sus tareas, permitiendo asignarles estados y fechas de vencimiento. La API sigue el enfoque de arquitectura limpia y utiliza prácticas recomendadas para garantizar la escalabilidad y mantenibilidad del código.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Características
 
-## Project setup
+- **Registro de Usuarios**: Permite la creación de nuevos usuarios con validación de datos.
+- **Autenticación**: Implementa un sistema de inicio de sesión que asegura el acceso a los recursos protegidos.
+- **Gestión de Tareas**: Permite crear, leer, actualizar y eliminar tareas.
+- **Validaciones**: Utiliza `class-validator` para garantizar que los datos enviados en las solicitudes cumplan con los requisitos establecidos.
 
-```bash
-$ npm install
-```
+## Endpoints
 
-## Compile and run the project
+#### Registro de Usuario
 
-```bash
-# development
-$ npm run start
+- **POST** `/v1/user/register`
+  - **Descripción**: Crea un nuevo usuario en el sistema.
+  - **Request Body**:
+    ```json
+    {
+      "email": "john.doe@example.com",
+      "name": "John Doe",
+      "password": "yourpassword"
+    }
+    ```
+  - **Response**:
+    - **201**: Usuario creado exitosamente.
+    - **400**: Error en la creación del usuario.
 
-# watch mode
-$ npm run start:dev
+#### Inicio de Sesión
 
-# production mode
-$ npm run start:prod
-```
+- **POST** `/v1/user/login`
+  - **Descripción**: Inicia sesión de un usuario existente.
+  - **Request Body**:
+    ```json
+    {
+      "email": "john.doe@example.com",
+      "password": "yourpassword"
+    }
+    ```
+  - **Response**:
+    - **200**: Inicio de sesión exitoso.
+    - **401**: Credenciales inválidas.
 
-## Run tests
+#### Gestión de Tareas
 
-```bash
-# unit tests
-$ npm run test
+- **POST** `/tasks`
+  - **Descripción**: Crear una nueva tarea.
+  - **Request Body**:
+    ```json
+    {
+      "title": "Hacer la compra",
+      "description": "Comprar frutas y verduras",
+      "status": "pending",
+      "dueDate": "2024-10-30T12:00:00Z"
+    }
+    ```
+  - **Response**:
+    - **201**: Tarea creada exitosamente.
+    - **400**: Error en la creación de la tarea.
 
-# e2e tests
-$ npm run test:e2e
+- **GET** `/tasks`
+  - **Descripción**: Listar todas las tareas del usuario autenticado.
+  - **Response**:
+    - **200**: Retorna una lista de tareas.
 
-# test coverage
-$ npm run test:cov
-```
+- **GET** `/tasks/:id`
+  - **Descripción**: Ver los detalles de una tarea específica.
+  - **Response**:
+    - **200**: Retorna los detalles de la tarea especificada.
+    - **404**: Tarea no encontrada.
 
-## Deployment
+- **PUT** `/tasks/:id`
+  - **Descripción**: Editar una tarea.
+  - **Request Body**:
+    ```json
+    {
+      "title": "Hacer la compra",
+      "description": "Comprar frutas y verduras y lácteos",
+      "status": "in-progress",
+      "dueDate": "2024-10-30T12:00:00Z"
+    }
+    ```
+  - **Response**:
+    - **200**: Tarea actualizada exitosamente.
+    - **400**: Error en la actualización de la tarea.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **DELETE** `/tasks/:id`
+  - **Descripción**: Eliminar una tarea.
+  - **Response**:
+    - **204**: Tarea eliminada exitosamente.
+    - **400**: Error en la eliminación de la tarea.
+    - **404**: Tarea no encontrada.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Variables de Entorno
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+Para ejecutar el proyecto, es necesario configurar las siguientes variables de entorno en un archivo `.env` en la raíz del proyecto:
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+```plaintext
+JWT_SECRET=todo-list
+KEY_MONGO=Prueba
+ ```
 
-## Resources
+# Proyecto de Gestión de Tareas
 
-Check out a few resources that may come in handy when working with NestJS:
+Este proyecto utiliza NestJS para la gestión de la autenticación y la conexión a la base de datos MongoDB. Asegúrate de tener configurado tu entorno de desarrollo para utilizar las variables de entorno correctamente.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Requisitos
 
-## Support
+- Node.js >= 14.x
+- NestJS >= 8.x
+- MongoDB o cualquier base de datos compatible
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Instalación
 
-## Stay in touch
+1. Clona el repositorio:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+   ```bash
+     git clone https://github.com/tu-usuario/tu-repositorio.git
+    ```
 
-## License
+2. Instala las dependencias:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+   ```'bash
+     cd tu-repositorio
+     npm install
+    ```
+
+3. Configura las variables de entorno en un archivo '.env'.
+
+4. Inicia la aplicación:
+
+   ```bash
+   npm run start
+   ```
+
+## Conclusión
+
+Este proyecto de gestión de tareas es un buen ejemplo de cómo construir aplicaciones escalables y mantenibles usando NestJS. La implementación puede servir como base para desarrollos futuros y ampliaciones de funcionalidades.
