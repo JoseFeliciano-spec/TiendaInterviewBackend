@@ -5,7 +5,7 @@
 
 ## Descripción
 
-Este proyecto es una API de gestión de tareas construida con **NestJS**, diseñada para ofrecer funcionalidades básicas de creación, actualización, eliminación y consulta de tareas. El objetivo de este sistema es facilitar a los usuarios la organización de sus tareas, permitiendo asignarles estados y fechas de vencimiento. La API sigue el enfoque de arquitectura limpia y utiliza prácticas recomendadas para garantizar la escalabilidad y mantenibilidad del código.
+Este proyecto es una API de gestión de tareas construida con NestJS, diseñada para ofrecer funcionalidades básicas de creación, actualización, eliminación y consulta de tareas. El objetivo de este sistema es facilitar a los usuarios la organización de sus tareas, permitiendo asignarles estados y fechas de vencimiento. La API sigue el enfoque de arquitectura limpia y utiliza prácticas recomendadas para garantizar la escalabilidad y mantenibilidad del código. Además, se ha integrado MongoDB como base de datos para el almacenamiento de datos y se utiliza JWT (JSON Web Token) para la autenticación y autorización de usuarios.
 
 ## Características
 
