@@ -68,9 +68,11 @@ export class InMemoryCrudTaskRepository extends TaskRepository {
     }
   }
 
-  async getAll(): Promise<any> {
+  async getAll(userId: string): Promise<any> {
+    console.log('Buscando tareas para el usuario:', userId);
     try {
-      const tasks = await this.taskModel.find().exec();
+      // Modificamos la consulta para filtrar por userId
+      const tasks = await this.taskModel.find({ userId: userId }).exec();
 
       return {
         message: 'Tareas recuperadas correctamente',
