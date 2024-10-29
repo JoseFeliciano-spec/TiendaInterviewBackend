@@ -10,21 +10,23 @@ import {
 } from '@/context/auth/infrastructure/schema/user.schema';
 import { LoginUserController } from './http-api/v1/login-user.ts/login-user.controller';
 import { LoginUserUseCase } from '../application/login-user-use-case/login-user.use-case';
-
+import { GetUserController } from './http-api/v1/get-user.ts/get-user.controller';
+import { GetUserUseCase } from '../application/get-user-use-case/get-user.use-case';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: UserMongo.name, schema: UserSchema }]),
   ],
-  controllers: [CreateUserController, LoginUserController],
+  controllers: [CreateUserController, LoginUserController, GetUserController],
   providers: [
     CreateUserUseCase,
     LoginUserUseCase,
+    GetUserUseCase,
     InMemoryUserRepository,
     {
       provide: UserRepository,
       useExisting: InMemoryUserRepository,
     },
   ],
-  exports: [CreateUserUseCase, LoginUserUseCase],
+  exports: [CreateUserUseCase, LoginUserUseCase, GetUserUseCase],
 })
 export class AuthModule {}

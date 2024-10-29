@@ -15,6 +15,31 @@ export class InMemoryUserRepository extends UserRepository {
     super();
   }
 
+  async getUserFromToken(token: string): Promise<any> {
+    try {
+      // Find the user using the decoded sub (user id)
+      console.log(token);
+      const user = await this.userModel.findOne({ _id: token });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuario no encontrado');
+      }
+
+      return {
+        message: 'Usuario encontrado correctamente',
+        statusCode: HttpStatus.OK,
+        data: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+  }
+
   async save(user: User): Promise<any> {
     const userUsing = user.toPrimitives();
     const existingUser = await this.userModel.findOne({
