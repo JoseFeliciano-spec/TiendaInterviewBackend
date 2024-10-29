@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from '@/context/auth/infrastructure/auth.modules';
+import { AuthModule } from '@/context/auth/infrastructure/auth.module';
 import { AuthGuard } from '@/context/shared/guards/auth.guard';
+import { TasksModules } from '@/context/tasks/infrastructure/task.module';
 
 @Module({
   providers: [AuthGuard],
@@ -15,6 +16,7 @@ import { AuthGuard } from '@/context/shared/guards/auth.guard';
       signOptions: { expiresIn: '24h' },
     }),
     AuthModule,
+    TasksModules,
     MongooseModule.forRoot(
       'mongodb+srv://todo:9lXIP3FzTGXsM9c7@cluster0.i8kuny3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
     ),

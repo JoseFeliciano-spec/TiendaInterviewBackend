@@ -76,7 +76,7 @@ export class InMemoryUserRepository extends UserRepository {
 
     return {
       message: 'Se ha iniciado sesión correctamente',
-      statusCode: HttpStatus.ACCEPTED,
+      statusCode: HttpStatus.OK,
       data: {
         access_token: await this.jwtService.signAsync(payload),
         id: user._id.toString(),
