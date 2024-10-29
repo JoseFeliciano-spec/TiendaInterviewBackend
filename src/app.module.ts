@@ -18,7 +18,7 @@ import { TasksModules } from '@/context/tasks/infrastructure/task.module';
     AuthModule,
     TasksModules,
     MongooseModule.forRoot(
-      'mongodb+srv://todo:9lXIP3FzTGXsM9c7@cluster0.i8kuny3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+      `mongodb+srv://todo:${process.env.KEY_MONGO}@cluster0.i8kuny3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`,
     ),
   ],
 })
