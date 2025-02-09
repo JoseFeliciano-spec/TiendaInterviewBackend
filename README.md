@@ -144,12 +144,12 @@ Un sistema robusto de gestión de inventario construido con NestJS, diseñado pa
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/gestion-inventario.git
+   git clone https://github.com/JoseFeliciano-spec/FeliInventoryBackend
    ```
 
 2. Instalar dependencias:
    ```bash
-   cd gestion-inventario
+   cd FeliInventoryBackend
    npm install
    ```
 
