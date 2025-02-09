@@ -5,11 +5,15 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Product } from '../../domain/product.entity';
+import { NotificationMongo } from '@/context/product/infrastructure/schema/notifier.schema';
 
 @Injectable()
 export class InMemoryCrudProductRepository extends ProductRepository {
   @InjectModel(ProductMongo.name)
   private productModel: Model<ProductMongo>;
+
+  @InjectModel(NotificationMongo.name)
+  private notificationModel: Model<NotificationMongo>;
 
   constructor(private jwtService: JwtService) {
     super();
@@ -67,12 +71,36 @@ export class InMemoryCrudProductRepository extends ProductRepository {
     }
   }
 
-  async getAll(id: string): Promise<any> {
+  async getAll(): Promise<any> {
     try {
+      // Obtener todos los productos
       const products = await this.productModel.find().exec();
 
+      // Filtrar productos con stock crítico (<= 5)
+      const productsWithLowStock = products.filter(
+        (product) => product.stock <= 5,
+      );
+
+      // Guardar en NotificationMongo si no existen notificaciones previas
+      for (const product of productsWithLowStock) {
+        const existingNotification = await this.notificationModel.findOne({
+          productId: product._id,
+        });
+
+        if (!existingNotification) {
+          await new this.notificationModel({
+            productId: product._id,
+            remainingQuantity: product.stock,
+          }).save();
+        }
+      }
+
       return {
-        message: 'Productos recuperados correctamente',
+        message: productsWithLowStock.length
+          ? `Atención: Hay productos con stock bajo (${productsWithLowStock
+              .map((p) => `${p.name} (${p.stock} unidades)`)
+              .join(', ')})`
+          : 'Productos recuperados correctamente',
         statusCode: HttpStatus.OK,
         data: products.map((product) => ({
           id: product._id,
