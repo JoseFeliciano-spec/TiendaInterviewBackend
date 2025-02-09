@@ -1,144 +1,189 @@
-# Proyecto de Gestión de Tareas en NestJS (FELITAKS)
+# Sistema de Gestión de Inventario en NestJS (FeliInventory)
 
-**Enlace de la API:** [https://todo-backend-nest-jjq1.onrender.com](https://todo-backend-nest-jjq1.onrender.com)
-**Enlace de la DOCUMENTACIÓN DE SWAGGER:** [https://todo-backend-nest-jjq1.onrender.com](https://todo-backend-nest-jjq1.onrender.com/docs)
+**Enlace de la API:** [https://feliinventorybackend.onrender.com](https://feliinventorybackend.onrender.com)
+**Enlace de la DOCUMENTACIÓN DE SWAGGER:** [https://feliinventorybackend.onrender.com/docs](https://feliinventorybackend.onrender.com/docs)
 
 ## Descripción
 
-Este proyecto es una API de gestión de tareas construida con NestJS, diseñada para ofrecer funcionalidades básicas de creación, actualización, eliminación y consulta de tareas. El objetivo de este sistema es facilitar a los usuarios la organización de sus tareas, permitiendo asignarles estados y fechas de vencimiento. La API sigue el enfoque de arquitectura limpia y utiliza prácticas recomendadas para garantizar la escalabilidad y mantenibilidad del código. Además, se ha integrado MongoDB como base de datos para el almacenamiento de datos y se utiliza JWT (JSON Web Token) para la autenticación y autorización de usuarios.
+Un sistema robusto de gestión de inventario construido con NestJS, diseñado para manejar la gestión de productos, movimientos de stock y notificaciones de bajo stock. El sistema ayuda a los administradores a mantener registros precisos del inventario con características como validación de SKU único, seguimiento de movimientos de stock y notificaciones automatizadas para situaciones de bajo stock.
 
 ## Características
 
-- **Registro de Usuarios**: Permite la creación de nuevos usuarios con validación de datos.
-- **Autenticación**: Implementa un sistema de inicio de sesión que asegura el acceso a los recursos protegidos.
-- **Gestión de Tareas**: Permite crear, leer, actualizar y eliminar tareas.
-- **Validaciones**: Utiliza `class-validator` para garantizar que los datos enviados en las solicitudes cumplan con los requisitos establecidos.
+- **Gestión de Productos**
+  - Crear, leer, actualizar y eliminar productos
+  - Validación de SKU único
+  - Seguimiento de stock
+  
+- **Control de Movimientos de Stock**
+  - Seguimiento de entradas y salidas de inventario
+  - Actualizaciones automáticas de stock
+  - Prevención de reducciones inválidas de stock
+  
+- **Notificaciones de Stock Bajo**
+  - Alertas automatizadas para stock bajo (5 unidades o menos)
+  - Sistema de notificaciones basado en eventos
+  - Registro de notificaciones
 
-## Endpoints
+## Endpoints de la API
 
-#### Registro de Usuario
+### Productos
 
-- **POST** `/v1/user/register`
-  - **Descripción**: Crea un nuevo usuario en el sistema.
-  - **Request Body**:
+#### Crear Producto
+- **POST** `/v1/products`
+  - Crea un nuevo producto con SKU único
+  - Cuerpo de la Solicitud:
     ```json
     {
-      "email": "john.doe@example.com",
-      "name": "John Doe",
-      "password": "yourpassword"
+      "name": "Laptop Dell XPS 13",
+      "sku": "DELL-XPS13-2024",
+      "price": 1299.99,
+      "stock": 50
     }
     ```
-  - **Response**:
-    - **201**: Usuario creado exitosamente.
-    - **400**: Error en la creación del usuario.
+  - Respuestas:
+    - 201: Producto creado exitosamente
+    - 409: SKU ya existe
 
-#### Inicio de Sesión
+#### Obtener Todos los Productos
+- **GET** `/v1/products`
+  - Recupera todos los productos
+  - Respuesta: 200 OK con lista de productos
 
-- **POST** `/v1/user/login`
-  - **Descripción**: Inicia sesión de un usuario existente.
-  - **Request Body**:
+#### Actualizar Producto
+- **PUT** `/v1/products/{id}`
+  - Actualiza un producto existente
+  - Cuerpo de la Solicitud:
     ```json
     {
-      "email": "john.doe@example.com",
-      "password": "yourpassword"
+      "id": "605c72e1582d32001520b451",
+      "name": "Laptop Dell XPS 13",
+      "sku": "DELL-XPS13-2024",
+      "price": 1299.99,
+      "stock": 50
     }
     ```
-  - **Response**:
-    - **200**: Inicio de sesión exitoso.
-    - **401**: Credenciales inválidas.
+  - Respuesta: 200 OK
 
-#### Gestión de Tareas
+#### Eliminar Producto
+- **DELETE** `/v1/products/{id}`
+  - Elimina un producto
+  - Respuesta: 200 OK
 
-- **POST** `/tasks`
-  - **Descripción**: Crear una nueva tarea.
-  - **Request Body**:
+### Movimientos de Stock
+
+#### Crear Movimiento de Stock
+- **POST** `/v1/stock-movements`
+  - Registra entrada o salida de stock
+  - Cuerpo de la Solicitud:
     ```json
     {
-      "title": "Hacer la compra",
-      "description": "Comprar frutas y verduras",
-      "status": "pending",
-      "dueDate": "2024-10-30T12:00:00Z"
+      "productId": "507f1f77bcf86cd799439011",
+      "type": "entrada",
+      "quantity": 50
     }
     ```
-  - **Response**:
-    - **201**: Tarea creada exitosamente.
-    - **400**: Error en la creación de la tarea.
+  - Respuestas:
+    - 201: Movimiento registrado exitosamente
+    - 400: Stock insuficiente para movimiento de salida
 
-- **GET** `/tasks`
-  - **Descripción**: Listar todas las tareas del usuario autenticado.
-  - **Response**:
-    - **200**: Retorna una lista de tareas.
+#### Obtener Todos los Movimientos
+- **GET** `/v1/stock-movements`
+  - Lista todos los movimientos de stock
+  - Respuesta: 200 OK con lista de movimientos
 
-- **GET** `/tasks/:id`
-  - **Descripción**: Ver los detalles de una tarea específica.
-  - **Response**:
-    - **200**: Retorna los detalles de la tarea especificada.
-    - **404**: Tarea no encontrada.
+#### Obtener Movimiento Individual
+- **GET** `/v1/stock-movements/{id}`
+  - Recupera detalles de un movimiento específico
+  - Respuesta: 200 OK
 
-- **PUT** `/tasks/:id`
-  - **Descripción**: Editar una tarea.
-  - **Request Body**:
+#### Actualizar Movimiento
+- **PUT** `/v1/stock-movements/{id}`
+  - Actualiza detalles del movimiento
+  - Cuerpo de la Solicitud:
     ```json
     {
-      "title": "Hacer la compra",
-      "description": "Comprar frutas y verduras y lácteos",
-      "status": "in-progress",
-      "dueDate": "2024-10-30T12:00:00Z"
+      "productId": "507f1f77bcf86cd799439011",
+      "type": "entrada",
+      "quantity": 50
     }
     ```
-  - **Response**:
-    - **200**: Tarea actualizada exitosamente.
-    - **400**: Error en la actualización de la tarea.
+  - Respuesta: 200 OK
 
-- **DELETE** `/tasks/:id`
-  - **Descripción**: Eliminar una tarea.
-  - **Response**:
-    - **204**: Tarea eliminada exitosamente.
-    - **400**: Error en la eliminación de la tarea.
-    - **404**: Tarea no encontrada.
+#### Eliminar Movimiento
+- **DELETE** `/v1/stock-movements/{id}`
+  - Elimina registro de movimiento
+  - Respuesta: 200 OK
 
-## Variables de Entorno
+## Reglas de Negocio
 
-Para ejecutar el proyecto, es necesario configurar las siguientes variables de entorno en un archivo `.env` en la raíz del proyecto:
+1. **Registro de Productos**
+   - Cada producto debe tener un SKU único
+   - Campos requeridos: SKU, nombre, precio, stock inicial
+   - SKUs duplicados resultan en respuesta 409 Conflict
 
-```plaintext
-JWT_SECRET=todo-list
-KEY_MONGO=Prueba
- ```
+2. **Movimiento de Stock**
+   - Todos los movimientos de entrada y salida deben ser registrados
+   - Las salidas de stock requieren stock suficiente disponible
+   - El stock del producto se actualiza automáticamente con los movimientos
+   - Reducciones inválidas de stock retornan 400 Bad Request
 
-# Proyecto de Gestión de Tareas
+3. **Notificaciones de Stock Bajo**
+   - El sistema monitorea niveles de stock continuamente
+   - Activa notificación cuando el stock llega a ≤ 5 unidades
+   - Se emite evento de dominio para situaciones de stock bajo
+   - Las notificaciones se registran en la tabla `notificaciones`
 
-Este proyecto utiliza NestJS para la gestión de la autenticación y la conexión a la base de datos MongoDB. Asegúrate de tener configurado tu entorno de desarrollo para utilizar las variables de entorno correctamente.
+## Requisitos Técnicos
 
-## Requisitos
-
-- Node.js >= 14.x
-- NestJS >= 8.x
-- MongoDB o cualquier base de datos compatible
+- Node.js
+- NestJS
+- MongoDB
+- TypeScript
 
 ## Instalación
 
-1. Clona el repositorio:
-
+1. Clonar el repositorio:
    ```bash
-     git clone https://github.com/tu-usuario/tu-repositorio.git
-    ```
+   git clone https://github.com/tu-usuario/gestion-inventario.git
+   ```
 
-2. Instala las dependencias:
+2. Instalar dependencias:
+   ```bash
+   cd gestion-inventario
+   npm install
+   ```
 
-   ```'bash
-     cd tu-repositorio
-     npm install
-    ```
+3. Configurar variables de entorno:
+   Crear un archivo `.env` con las configuraciones necesarias
+      ```bash
+     KEY_MONGO = <TU CLAVE DE MONGO>
+    JWT_SECRET = todo-lis
+   ```
 
-3. Configura las variables de entorno en un archivo '.env'.
-
-4. Inicia la aplicación:
-
+5. Iniciar la aplicación:
    ```bash
    npm run start
    ```
 
-## Conclusión
+## Pruebas
 
-Este proyecto de gestión de tareas es un buen ejemplo de cómo construir aplicaciones escalables y mantenibles usando NestJS. La implementación puede servir como base para desarrollos futuros y ampliaciones de funcionalidades.
+Ejecutar suite de pruebas:
+```bash
+npm run test
+```
+
+## Documentación
+
+La documentación de la API está disponible en `/docs` cuando la aplicación está en ejecución.
+
+## Contribuir
+
+1. Haz un fork del repositorio
+2. Crea tu rama de características
+3. Haz commit de tus cambios
+4. Haz push a la rama
+5. Crea un Pull Request
+
+## Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT.
