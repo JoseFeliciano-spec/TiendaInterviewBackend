@@ -1,25 +1,24 @@
 import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserRepository } from '@/context/auth/domain/user.repository';
-import { Model } from 'mongoose';
 import { User } from '@/context/auth/domain/user.entity';
-import { UserMongo } from '@/context/auth/infrastructure/schema/user.schema';
-import { InjectModel } from '@nestjs/mongoose';
+import { PrismaService } from '@/context/shared/database/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-
 @Injectable()
 export class InMemoryUserRepository extends UserRepository {
-  @InjectModel(UserMongo.name) private userModel: Model<UserMongo>;
-
-  constructor(private jwtService: JwtService) {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {
     super();
   }
 
   async getUserFromToken(token: string): Promise<any> {
     try {
-      // Find the user using the decoded sub (user id)
       console.log(token);
-      const user = await this.userModel.findOne({ _id: token });
+      const user = await this.prisma.user.findUnique({ 
+        where: { id: token } 
+      });
 
       if (!user) {
         throw new UnauthorizedException('Usuario no encontrado');
@@ -29,7 +28,7 @@ export class InMemoryUserRepository extends UserRepository {
         message: 'Usuario encontrado correctamente',
         statusCode: HttpStatus.OK,
         data: {
-          id: user._id.toString(),
+          id: user.id.toString(),
           name: user.name,
           email: user.email,
           createdAt: user.createdAt,
@@ -42,33 +41,34 @@ export class InMemoryUserRepository extends UserRepository {
 
   async save(user: User): Promise<any> {
     const userUsing = user.toPrimitives();
-    const existingUser = await this.userModel.findOne({
-      email: userUsing.email,
+    
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: userUsing.email },
     });
+
     if (existingUser) {
       throw new Error('El usuario ya existe');
     }
 
     const hashedPassword = await bcrypt.hash(userUsing.password, 10);
 
-    const newUser = new this.userModel({
-      ...userUsing,
-      password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const savedUser = await this.prisma.user.create({
+      data: {
+        name: userUsing.name,
+        email: userUsing.email,
+        password: hashedPassword,
+      },
     });
 
-    const savedUser = await newUser.save();
-
-    const payload = { sub: savedUser._id, email: savedUser.email };
+    const payload = { sub: savedUser.id, email: savedUser.email };
     const token = await this.jwtService.signAsync(payload);
 
     return {
-      message: 'Se ha creado el usuario correctamentsse',
+      message: 'Se ha creado el usuario correctamente',
       statusCode: HttpStatus.ACCEPTED,
       data: {
         access_token: token,
-        id: savedUser._id.toString(),
+        id: savedUser.id.toString(),
         name: savedUser.name,
         email: savedUser.email,
       },
@@ -82,7 +82,9 @@ export class InMemoryUserRepository extends UserRepository {
     email: string;
     password: string;
   }): Promise<any> {
-    const user = await this.userModel.findOne({ email });
+    const user = await this.prisma.user.findUnique({ 
+      where: { email } 
+    });
 
     if (!user) {
       throw new UnauthorizedException('Credenciales inválida: El email');
@@ -94,19 +96,19 @@ export class InMemoryUserRepository extends UserRepository {
       throw new UnauthorizedException('Contraseña incorrecta');
     }
 
-    await this.userModel.updateOne(
-      { _id: user._id },
-      { $set: { lastLogin: new Date() } },
-    );
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
 
-    const payload = { sub: user._id, email: user.email };
+    const payload = { sub: user.id, email: user.email };
 
     return {
       message: 'Se ha iniciado sesión correctamente',
       statusCode: HttpStatus.OK,
       data: {
         access_token: await this.jwtService.signAsync(payload),
-        id: user._id.toString(),
+        id: user.id.toString(),
         name: user.name,
         email: user.email,
       },

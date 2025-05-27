@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones según especificaciones del test
+  transactions Transaction[]
+  deliveries   Delivery[]
+
+  @@map("users")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  price         Int      // En centavos para evitar problemas de float
+  originalPrice Int?     // Precio original antes del descuento
+  image         String
+  category      String
+  stock         Int      @default(0)
+  rating        Float    @default(0)
+  reviews       Int      @default(0)
+  tags          String[] // Array de strings en PostgreSQL
+  featured      Boolean  @default(false)
+  discount      Int?     // Porcentaje de descuento
+  sku           String   @unique // Stock Keeping Unit
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones según flujo de 5 pasos del test
+  transactionItems TransactionItem[]
+  stockMovements   StockMovement[]
+
+  @@map("products")
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  reference         String            @unique // Referencia única para Tienda
+  userId            String?
+  status            TransactionStatus @default(PENDING)
+  amount            Int               // Total en centavos
+  subtotal          Int               // Subtotal productos en centavos
+  baseFee           Int               @default(500) // Fee base en centavos (5000 pesos)
+  deliveryFee       Int               @default(800) // Fee envío en centavos (8000 pesos)
+  wompiTransactionId String?          // ID de transacción de Wompi
+  paymentMethod     PaymentMethod?
+  
+  // Datos del cliente (para transacciones sin usuario registrado)
+  customerName      String?
+  customerEmail     String
+  customerPhone     String?
+  customerDocument  String?
+  
+  // Datos de entrega
+  deliveryId        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relaciones
+  user             User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  delivery         Delivery?          @relation(fields: [deliveryId], references: [id])
+  transactionItems TransactionItem[]
+
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String @id @default(cuid())
+  transactionId String
+  productId     String
+  quantity      Int
+  unitPrice     Int    // Precio unitario en el momento de la compra
+  totalPrice    Int    // Precio total del item
+
+  // Relaciones
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@map("transaction_items")
+}
+
+model Delivery {
+  id           String        @id @default(cuid())
+  userId       String?
+  firstName    String
+  lastName     String
+  email        String
+  phone        String
+  address      String
+  city         String
+  department   String?
+  postalCode   String?
+  country      String        @default("CO")
+  status       DeliveryStatus @default(PENDING)
+  estimatedDate DateTime?
+  deliveredAt  DateTime?
+  trackingCode String?       @unique
+  notes        String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relaciones
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@map("deliveries")
+}
+
+model StockMovement {
+  id          String           @id @default(cuid())
+  productId   String
+  movementType StockMovementType
+  quantity    Int              // Positivo para entrada, negativo para salida
+  previousStock Int
+  newStock    Int
+  reason      String?          // Venta, restock, ajuste, etc.
+  reference   String?          // Referencia a transacción u orden
+  
+  createdAt   DateTime @default(now())
+
+  // Relaciones
+  product     Product @relation(fields: [productId], references: [id])
+
+  @@map("stock_movements")
+}
+
+// Enums según especificaciones del test de la tienda
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  ERROR
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PSE
+  NEQUI
+  DAVIPLATA
+}
+
+enum DeliveryStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum StockMovementType {
+  SALE          // Venta
+  RESTOCK       // Reabastecimiento
+  ADJUSTMENT    // Ajuste de inventario
+  RETURN        // Devolución
+  DAMAGE        // Producto dañado
+}

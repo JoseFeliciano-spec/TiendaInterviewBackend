@@ -1,65 +1,70 @@
-
-// Interfaz para los datos primitivos de un producto
 export interface PrimitiveProduct {
   id?: string;
   name?: string;
-  sku?: string;
-  price?: number;
+  description?: string;
+  price?: number; // En centavos
+  originalPrice?: number;
+  image?: string;
+  category?: string;
   stock?: number;
+  rating?: number;
+  reviews?: number;
+  tags?: string[];
+  featured?: boolean;
+  discount?: number;
+  sku?: string;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export class Product {
   constructor(private attributes: PrimitiveProduct) {}
 
-  static create(createProduct: {
-    name: string;
-    sku: string;
-    price: number;
-    stock: number;
-  }): Product {
-    return new Product({
-      name: createProduct.name,
-      sku: createProduct.sku,
-      price: createProduct.price,
-      stock: createProduct.stock,
-    });
-  }
-
-  static update(updateProduct: {
-    id?: string;
-    name?: string;
-    sku?: string;
-    price?: number;
-    stock?: number;
-  }): Product {
-    return new Product({
-      id: updateProduct.id,
-      name: updateProduct.name,
-      sku: updateProduct.sku,
-      price: updateProduct.price,
-      stock: updateProduct.stock,
-    });
-  }
-
-  static delete(id: string): any {
-    return new Product({});
-  }
-
-  static getAll(): Product[] {
-    return [];
-  }
-
-  static async getProductById(id: string): Promise<any> {
-    return null;
+  static fromPrimitives(primitives: PrimitiveProduct): Product {
+    return new Product(primitives);
   }
 
   toPrimitives(): PrimitiveProduct {
     return {
       id: this.attributes.id,
       name: this.attributes.name,
-      sku: this.attributes.sku,
+      description: this.attributes.description,
       price: this.attributes.price,
+      originalPrice: this.attributes.originalPrice,
+      image: this.attributes.image,
+      category: this.attributes.category,
       stock: this.attributes.stock,
+      rating: this.attributes.rating,
+      reviews: this.attributes.reviews,
+      tags: this.attributes.tags,
+      featured: this.attributes.featured,
+      discount: this.attributes.discount,
+      sku: this.attributes.sku,
+      isActive: this.attributes.isActive,
+      createdAt: this.attributes.createdAt,
+      updatedAt: this.attributes.updatedAt,
     };
+  }
+
+  // Getters
+  get id(): string | undefined {
+    return this.attributes.id;
+  }
+
+  get name(): string | undefined {
+    return this.attributes.name;
+  }
+
+  get price(): number | undefined {
+    return this.attributes.price;
+  }
+
+  get stock(): number | undefined {
+    return this.attributes.stock;
+  }
+
+  get isActive(): boolean | undefined {
+    return this.attributes.isActive;
   }
 }

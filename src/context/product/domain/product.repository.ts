@@ -1,13 +1,22 @@
-import {
-  Product,
-} from '@/context/product/domain/product.entity';
-
-// Interfaz para el repositorio de productos
+import { Product } from './product.entity';
+export interface ProductFilters {
+  category?: string;
+  featured?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  tags?: string[];
+  search?: string;
+}
+export interface ProductListResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
 export abstract class ProductRepository {
-  // Métodos abstractos que deben implementarse en la clase concreta
-  abstract create(product: Product): Promise<any>;
-  abstract deleteProduct(id: string): Promise<any>;
-  abstract getAll(id: string): Promise<any>;
-  abstract update(product: Product): Promise<any>;
-  abstract getProductById(id: string): Promise<any>;
+  abstract findAll(filters?: ProductFilters, page?: number, limit?: number): Promise<ProductListResponse>;
 }
