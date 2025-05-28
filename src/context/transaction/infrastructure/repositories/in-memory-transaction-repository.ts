@@ -28,152 +28,7 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     private readonly prisma: PrismaService,
     private readonly wompiService: WompiService,
   ) {}
-  delete(id: string): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  findPendingWompiTransactions(
-    olderThanMinutes?: number,
-  ): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  findTransactionsAffectingStock(
-    productId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  assignProductForDelivery(details: DeliveryAssignmentDetails): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  findTransactionsForDelivery(status: 'APPROVED'): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  updateDeliveryStatus(
-    transactionId: string,
-    deliveryStatus: string,
-    trackingCode?: string,
-  ): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-  findAll(
-    filters?: TransactionFilters,
-    page?: number,
-    limit?: number,
-  ): Promise<TransactionListResponse> {
-    throw new Error('Method not implemented.');
-  }
-  findByStatus(
-    status: TransactionStatus,
-    page?: number,
-    limit?: number,
-  ): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  findByCustomerEmail(
-    email: string,
-    page?: number,
-    limit?: number,
-  ): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  getTransactionSummary(
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<TransactionSummary> {
-    throw new Error('Method not implemented.');
-  }
-  findSuspiciousTransactions(): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  findFailedTransactionsForRetry(): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-  clearTestData?(): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  getRepositoryStats?(): Promise<{
-    totalTransactions: number;
-    byStatus: Record<string, number>;
-    totalRevenue: number;
-    memoryUsage?: string;
-  }> {
-    throw new Error('Method not implemented.');
-  }
-  validateWebhookSignature?(
-    payload: string,
-    signature: string,
-    secret: string,
-  ): boolean {
-    throw new Error('Method not implemented.');
-  }
-  processWompiWebhook?(
-    eventType: string,
-    transactionData: any,
-  ): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-  createPendingTransaction?(
-    productId: string,
-    quantity: number,
-    customerEmail: string,
-    deliveryInfo?: any,
-  ): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-  processPaymentWithWompi?(
-    transactionId: string,
-    paymentData: any,
-  ): Promise<{
-    success: boolean;
-    wompiTransactionId?: string;
-    status: TransactionStatus;
-    error?: string;
-  }> {
-    throw new Error('Method not implemented.');
-  }
-  completePostPaymentFlow?(transactionId: string): Promise<{
-    stockUpdated: boolean;
-    deliveryAssigned: boolean;
-    emailSent: boolean;
-  }> {
-    throw new Error('Method not implemented.');
-  }
-  calculateTransactionFees?(subtotal: number): {
-    baseFee: number;
-    deliveryFee: number;
-    total: number;
-  } {
-    throw new Error('Method not implemented.');
-  }
-  validateCreditCardData?(
-    cardNumber: string,
-    cardHolder: string,
-    expiryDate: string,
-    cvv: string,
-  ): {
-    isValid: boolean;
-    cardType: 'VISA' | 'MASTERCARD' | 'UNKNOWN';
-    errors: string[];
-  } {
-    throw new Error('Method not implemented.');
-  }
-  recoverClientProgress?(
-    sessionId: string,
-    customerEmail: string,
-  ): Promise<{ step: 1 | 2 | 3 | 4 | 5; transactionId?: string; data?: any }> {
-    throw new Error('Method not implemented.');
-  }
-  saveClientProgress?(
-    sessionId: string,
-    step: number,
-    data: any,
-  ): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-
-  // src/context/transaction/infrastructure/PrismaTransactionRepository.ts
-  // src/context/transaction/infrastructure/PrismaTransactionRepository.ts
+  
   async save(
     transaction: Transaction,
     paymentData?: {
@@ -400,64 +255,6 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     }
   }
 
-  // ✅ Método para auto-actualizar stock según Step 5 del search result [1]
-  private async autoUpdateStock(transaction: Transaction): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (tx) => {
-        // 1. Obtener producto actual
-        const product = await tx.product.findUnique({
-          where: { id: transaction.productId },
-          select: { stock: true, name: true },
-        });
-
-        if (!product) {
-          this.logger.error(
-            `❌ Product not found for stock update: ${transaction.productId}`,
-          );
-          return;
-        }
-
-        const newStock = product.stock - transaction.quantity;
-
-        if (newStock < 0) {
-          this.logger.error(
-            `❌ Insufficient stock for approved transaction. Available: ${product.stock}, Required: ${transaction.quantity}`,
-          );
-          return; // No lanzar error para evitar rollback de transacción aprobada
-        }
-
-        // 2. Actualizar stock del producto
-        await tx.product.update({
-          where: { id: transaction.productId },
-          data: {
-            stock: newStock,
-            updatedAt: new Date(),
-          },
-        });
-
-        // 3. Registrar movimiento de stock
-        await tx.stockMovement.create({
-          data: {
-            productId: transaction.productId,
-            quantity: -transaction.quantity, // Negativo = venta
-            movementType: 'SALE',
-            reason: `Auto Sale - Transaction ${transaction.reference} APPROVED by Wompi`,
-            previousStock: product.stock,
-            newStock: newStock,
-            reference: transaction.reference,
-            createdAt: new Date(),
-          },
-        });
-
-        this.logger.log(
-          `📦 Auto stock updated: ${product.name} - ${product.stock} -> ${newStock} (-${transaction.quantity})`,
-        );
-      });
-    } catch (error) {
-      this.logger.error(`❌ Error in auto stock update: ${error.message}`);
-    }
-  }
-
   // ✅ Helper methods según search results [4-6]
   private parseExpiryDate(expiryDate: string): [string, string] {
     if (expiryDate.includes('/')) {
@@ -627,6 +424,39 @@ export class InMemoryTransactionRepository implements TransactionRepository {
             }
           }
         }
+
+        return updatedTransaction;
+      });
+
+      this.logger.log(
+        `✅ Wompi transaction updated: ${result.reference} - Status: ${status}`,
+      );
+      return this.mapToTransaction(result);
+    } catch (error) {
+      this.logger.error(
+        `❌ Error updating Wompi transaction: ${error.message}`,
+      );
+      throw new BadRequestException(
+        `Error updating Wompi transaction: ${error.message}`,
+      );
+    }
+  }
+
+  async updateWompiTransactionReferencesStatus(
+    references: string,
+    status: TransactionStatus,
+  ): Promise<Transaction> {
+    try {
+      // ✅ Transacción atómica: Update status + Auto stock update según search results [5-8]
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Actualizar transacción
+        const updatedTransaction = await tx.transaction.update({
+          where: { reference: references },
+          data: {
+            status,
+            updatedAt: new Date(),
+          },
+        });
 
         return updatedTransaction;
       });

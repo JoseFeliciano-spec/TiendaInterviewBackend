@@ -7,9 +7,9 @@ async function bootstrap() {
 
   // Configuración de Swagger para FeliTask
   const config = new DocumentBuilder()
-    .setTitle('FeliInventory API')
+    .setTitle('Tienda API')
     .setDescription(
-      'API de gestión de inventarios FeliInventory - Sistema de organización de productos',
+      'API que se conecta con una pasarela de pagos',
     )
     .setVersion('1.0')
     .addTag('auth', 'Autenticación y gestión de usuarios')

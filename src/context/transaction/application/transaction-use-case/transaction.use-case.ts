@@ -38,6 +38,11 @@ export interface UpdateTransactionStatusRequest {
   wompiTransactionId: string; // Wompi's transaction ID
 }
 
+export interface UpdateWebHookRequest {
+  reference: string;
+  status: any;
+}
+
 @Injectable()
 export class TransactionUseCases {
   constructor(
@@ -194,6 +199,83 @@ export class TransactionUseCases {
     }
   }
 
+  async getTransactionByReferences(reference: string): Promise<{
+    success: boolean;
+    data?: {
+      id: string;
+      reference: string;
+      status: string;
+      productName: string;
+      quantity: number;
+      amount: number; // En pesos para frontend
+      subtotal: number; // En pesos
+      baseFee: number; // En pesos (display value)
+      deliveryFee: number; // En pesos (display value)
+      customerEmail: string;
+      // customerName and customerPhone are not on the Transaction entity, so not returned here
+    };
+    error?: string;
+    message: string;
+    statusCode: number;
+  }> {
+    try {
+      const transaction =
+        await this.transactionRepository.findByReference(reference);
+      if (!transaction) {
+        return {
+          success: false,
+          error: 'Transaction not found',
+          message: 'Transaction not found',
+          statusCode: 404,
+        };
+      }
+
+      // Fees used for original calculation (in cents)
+      const calculatedBaseFeeCents = 500;
+      // Determine calculated delivery fee based on how original amount was formed
+      const originalSubtotalCents =
+        transaction.amount -
+        calculatedBaseFeeCents -
+        (transaction.amount > 5000000 + calculatedBaseFeeCents ? 0 : 800);
+      const calculatedDeliveryFeeCents =
+        originalSubtotalCents > 5000000 ? 0 : 800;
+
+      // Displayed fees in pesos (as per your original getTransactionById logic for display)
+      const displayBaseFeePesos = 5000;
+      const displayDeliveryFeePesos =
+        transaction.amount > 5000000 + 500 ? 0 : 8000; // Match condition for 800 cents delivery fee
+
+      return {
+        success: true,
+        data: {
+          id: transaction.id,
+          reference: transaction.reference,
+          status: transaction.status,
+          productName: transaction.productName,
+          quantity: transaction.quantity,
+          amount: this.convertCentsToPesos(transaction.amount),
+          subtotal: this.convertCentsToPesos(
+            transaction.amount -
+              calculatedBaseFeeCents -
+              calculatedDeliveryFeeCents,
+          ),
+          baseFee: displayBaseFeePesos,
+          deliveryFee: displayDeliveryFeePesos,
+          customerEmail: transaction.customerEmail,
+        },
+        message: 'Transaction retrieved successfully.',
+        statusCode: 200,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: 'Error fetching transaction',
+        statusCode: 400,
+      };
+    }
+  }
+
   async updateTransactionStatus(
     request: UpdateTransactionStatusRequest,
   ): Promise<{
@@ -283,6 +365,76 @@ export class TransactionUseCases {
     }
   }
 
+  async updateTransactionStatusWebHook(request: UpdateWebHookRequest): Promise<{
+    success: boolean;
+    data?: {
+      status: string;
+      reference?: string;
+    };
+    error?: string;
+    message: string;
+    statusCode: number;
+  }> {
+    try {
+      const existingTransaction =
+        await this.transactionRepository.findByReference(request.reference);
+      if (!existingTransaction) {
+        throw new NotFoundException(
+          `Transaction with ID ${request.reference} not found.`,
+        );
+      }
+
+      // Prevent redundant updates or illogical status changes if necessary
+      if (
+        existingTransaction.status === request.status &&
+        existingTransaction.reference === request.reference
+      ) {
+        return {
+          success: true,
+          data: {
+            reference: request.reference,
+            status: request.status,
+          },
+          message: 'Transaction status already matches. No update performed.',
+          statusCode: 200, // Or 304 Not Modified
+        };
+      }
+
+      const updatedTransaction =
+        await this.transactionRepository.updateWompiTransactionReferencesStatus(
+          request.reference,
+          request.status, // This should be a valid TransactionStatus enum value
+        );
+
+      return {
+        success: true,
+        data: {
+          reference: updatedTransaction.reference,
+          status: updatedTransaction.status,
+        },
+        message: `Transaction status updated to ${updatedTransaction.status}`,
+        statusCode: 200,
+      };
+    } catch (error) {
+      console.error(
+        `[UseCase] Error updating transaction status for ${request.reference}:`,
+        error,
+      );
+      const statusCode =
+        error instanceof NotFoundException
+          ? 404
+          : error instanceof BadRequestException
+            ? 400
+            : 500;
+      return {
+        success: false,
+        error: error.message,
+        message: 'Error updating transaction status',
+        statusCode,
+      };
+    }
+  }
+
   private async updateProductStock(transaction: Transaction): Promise<boolean> {
     try {
       await this.transactionRepository.recordStockMovement({
@@ -296,10 +448,6 @@ export class TransactionUseCases {
       await this.productRepository.updateStock(
         transaction.productId,
         -transaction.quantity,
-      );
-
-      console.log(
-        `[TransactionUseCases] Stock updated for product ${transaction.productName}: -${transaction.quantity} units`,
       );
       return true;
     } catch (error) {

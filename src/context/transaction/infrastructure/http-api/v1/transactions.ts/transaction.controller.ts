@@ -169,7 +169,7 @@ export class TransactionController {
       const transaction = event.data.transaction;
       
       //  Buscar transacción local por reference según search results
-      const localTransaction = await this.transactionService.getTransactionById(transaction.id);
+      const localTransaction = await this.transactionService.getTransactionByReferences(transaction.reference);
       
       if (!localTransaction.success) {
         this.logger.error(`❌ Local transaction not found: ${transaction.reference}`);
@@ -186,10 +186,9 @@ export class TransactionController {
       const newStatus = statusMap[transaction.status] || 'ERROR';
 
       //  Actualizar estado automáticamente
-      await this.transactionService.updateTransactionStatus({
-        transactionId: localTransaction.data.id,
+      await this.transactionService.updateTransactionStatusWebHook({
+        reference: localTransaction.data.reference,
         status: newStatus,
-        wompiTransactionId: transaction.id,
       });
 
       //  Step 5 del flujo: Auto-ejecutar si es APPROVED según test de la Tienda

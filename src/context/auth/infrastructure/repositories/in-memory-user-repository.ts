@@ -15,7 +15,6 @@ export class InMemoryUserRepository extends UserRepository {
 
   async getUserFromToken(token: string): Promise<any> {
     try {
-      console.log(token);
       const user = await this.prisma.user.findUnique({ 
         where: { id: token } 
       });
