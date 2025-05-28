@@ -3,6 +3,7 @@ export interface MinimalTransaction {
   id: string;
   reference: string;
   status: TransactionStatus;
+  userId: string;
   productId: string;
   productName: string;
   quantity: number;
@@ -16,6 +17,7 @@ export class Transaction {
     public readonly id: string,
     public readonly reference: string,
     public readonly status: TransactionStatus,
+    public readonly  userId: string,
     public readonly productId: string,
     public readonly productName: string,
     public readonly quantity: number,
@@ -33,6 +35,7 @@ export class Transaction {
     quantity: number;
     productPrice: number; // En centavos
     customerEmail: string;
+    userId: string;
   }): Transaction {
     const reference = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
     
@@ -46,6 +49,7 @@ export class Transaction {
       crypto.randomUUID(),
       reference,
       TransactionStatus.PENDING,
+      data?.userId,
       data.productId,
       data.productName,
       data.quantity,
@@ -62,6 +66,7 @@ export class Transaction {
       this.id,
       this.reference,
       status,
+      this.userId,
       this.productId,
       this.productName,
       this.quantity,
@@ -76,6 +81,7 @@ export class Transaction {
   toPrimitives(): MinimalTransaction {
     return {
       id: this.id,
+      userId: this.userId,
       reference: this.reference,
       status: this.status,
       productId: this.productId,

@@ -1,4 +1,3 @@
-// src/context/transaction/infrastructure/controllers/transaction.controller.ts
 import {
   Body,
   Controller,
@@ -10,12 +9,14 @@ import {
   HttpStatus,
   Headers,
   Logger,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TransactionUseCases } from '@/context/transaction/application/transaction-use-case/transaction.use-case';
 import { CreateTransactionDto } from './transaction.dto';
 import { errorResponse } from '@/context/shared/response/ErrorsResponse';
-import * as crypto from 'crypto';
+import { AuthGuard } from '@/context/shared/guards/auth.guard';
 
 //  Interface mínima para webhook según especificaciones exactas de la Tienda
 interface WompiWebhookEvent {
@@ -36,22 +37,22 @@ interface WompiWebhookEvent {
   };
 }
 
-@ApiTags('Transactions - Flow')
+@ApiTags('Transacciones - Flujo') // Translated
 @Controller('v1/transactions')
 export class TransactionController {
   private readonly logger = new Logger(TransactionController.name);
-  private readonly eventsSecret = process.env.WOMPI_EVENTS_KEY // Según documento PDF
 
   constructor(private readonly transactionService: TransactionUseCases) {}
 
   //  Step 1: Crear transacción en PENDING (Todo el flujo simplificado)
   @Post()
+  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
-    summary: 'Create transaction in PENDING status - Simplified Wompi flow',
-    description: 'Creates transaction in PENDING, returns ID for frontend polling. Webhook will update status automatically.'
+    summary: 'Crear transacción en estado PENDIENTE - Flujo Wompi simplificado', // Translated
+    description: 'Crea una transacción en estado PENDIENTE, devuelve un ID para sondeo desde el frontend. El webhook actualizará el estado automáticamente.' // Translated
   })
-  async createTransaction(@Body() createTransactionDto: CreateTransactionDto) {
+  async createTransaction(@Request() req,@Body() createTransactionDto: CreateTransactionDto) {
     await errorResponse(createTransactionDto, CreateTransactionDto);
     
     try {
@@ -64,6 +65,7 @@ export class TransactionController {
         cardHolder: createTransactionDto?.cardHolder,
         cardNumber: createTransactionDto?.cardNumber,
         cvv: createTransactionDto?.cvv,
+        userId: req?.user?.sub,
         expiryDate: createTransactionDto?.expiryDate,
       });
 
@@ -101,8 +103,8 @@ export class TransactionController {
   //  Step 2: Consultar estado (Para polling del frontend)
   @Get(':id/status')
   @ApiOperation({ 
-    summary: 'Check transaction status for frontend polling',
-    description: 'Returns current transaction status. Frontend can poll this endpoint until status changes from PENDING.'
+    summary: 'Consultar estado de la transacción para sondeo del frontend', // Translated
+    description: 'Devuelve el estado actual de la transacción. El frontend puede sondear este endpoint hasta que el estado cambie de PENDIENTE.' // Translated
   })
   async getTransactionStatus(@Param('id') transactionId: string) {
     try {
@@ -148,8 +150,8 @@ export class TransactionController {
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Wompi webhook for automatic status updates',
-    description: 'Receives Wompi webhooks and automatically updates transaction status + triggers Step 5 actions'
+    summary: 'Webhook de Wompi para actualizaciones automáticas de estado', // Translated
+    description: 'Recibe webhooks de Wompi y actualiza automáticamente el estado de la transacción + desencadena acciones del Paso 5.' // Translated
   })
   async handleWompiWebhook(
     @Body() event: WompiWebhookEvent,
@@ -235,44 +237,5 @@ export class TransactionController {
         timestamp: new Date().toISOString(),
       };
     }
-  }
-
-  //  Método privado para validación según especificaciones de la Tienda
-  private validateWebhookSignature(event: WompiWebhookEvent, receivedChecksum: string): boolean {
-    try {
-      if (!event.signature?.properties || !receivedChecksum) return false;
-
-      let concatenatedString = '';
-      
-      // Step 1: Concatenar properties según especificaciones de la Tienda
-      for (const property of event.signature.properties) {
-        const value = this.getNestedProperty(event.data, property);
-        concatenatedString += value;
-      }
-      
-      // Step 2: Concatenar timestamp
-      concatenatedString += event.timestamp.toString();
-      
-      // Step 3: Concatenar secret
-      concatenatedString += this.eventsSecret;
-      
-      // Step 4: SHA256
-      const calculatedChecksum = crypto
-        .createHash('sha256')
-        .update(concatenatedString)
-        .digest('hex')
-        .toUpperCase();
-
-      return calculatedChecksum === receivedChecksum.toUpperCase();
-    } catch (error) {
-      this.logger.error(`Signature validation error: ${error.message}`);
-      return false;
-    }
-  }
-
-  private getNestedProperty(obj: any, propertyPath: string): string {
-    return propertyPath.split('.').reduce((current, key) => {
-      return current?.[key]?.toString() || '';
-    }, obj);
   }
 }

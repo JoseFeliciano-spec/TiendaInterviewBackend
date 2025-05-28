@@ -1,4 +1,3 @@
-// src/context/transaction/application/dto/transaction.dto.ts
 import { 
   IsString, 
   IsNumber, 
@@ -16,7 +15,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 
 export class DeliveryInfoDto {
   @ApiProperty({ 

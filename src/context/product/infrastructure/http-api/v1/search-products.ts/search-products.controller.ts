@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { SearchProductsUseCase } from '@/context/product/application/search-products-use-case/get-search-products.use-case';
 
-@ApiTags('Products')
+@ApiTags('Productos') // Translated
 @Controller('api/v1/products')
 export class SearchProductsController {
   constructor(private readonly searchProductsUseCase: SearchProductsUseCase) {}
@@ -30,24 +30,24 @@ export class SearchProductsController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @ApiOperation({
-    summary: 'Search products by term, name, URL or slug',
+    summary: 'Buscar productos por término, nombre, URL o slug', // Translated
     description: `
-      Intelligent product search endpoint that supports multiple search methods:
+      Endpoint de búsqueda inteligente de productos que soporta múltiples métodos de búsqueda:
       
-      **Search Types:**
-      - Product name: "iPhone 15 Pro"
-      - Description terms: "smartphone premium"
-      - Product tags: "5g", "premium"
+      **Tipos de Búsqueda:**
+      - Nombre del producto: "iPhone 15 Pro"
+      - Términos en descripción: "smartphone premium"
+      - Etiquetas del producto: "5g", "premium"
       - URLs: "https://store.com/products/iphone-15-pro"
       - Slugs: "apple-iphone-15-pro-max"
       
-      **Features:**
-      - Smart URL/slug detection and parsing
-      - Fallback search for better results
-      - Combined filters (category, price range)
-      - Pagination optimized for mobile-first design
-      - Only returns products in stock
-    `,
+      **Características:**
+      - Detección y análisis inteligente de URLs/slugs
+      - Búsqueda de respaldo para mejores resultados
+      - Filtros combinados (categoría, rango de precios)
+      - Paginación optimizada para diseño mobile-first
+      - Solo devuelve productos en stock
+    `, // Translated
     operationId: 'searchProducts',
   })
   @ApiQuery({
@@ -131,7 +131,6 @@ export class SearchProductsController {
       },
     },
   })
-
   @ApiNotFoundResponse({
     description: 'No products found for the search criteria',
     schema: {
@@ -142,7 +141,6 @@ export class SearchProductsController {
       },
     },
   })
-
   async searchProducts(
     @Query() searchParams: any
   ): Promise<any> {

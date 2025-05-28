@@ -31,6 +31,7 @@ export abstract class ProductRepository {
 
   // findById requerido por TransactionUseCases según search results
   abstract findById(id: string): Promise<Product | null>;
+  abstract findByUser(idUser: string): Promise<any>;
 
   // Métodos adicionales según especificaciones del test de la Tienda
   abstract findBySku(sku: string): Promise<Product | null>;

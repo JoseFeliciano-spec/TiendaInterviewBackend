@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ProductRepository, ProductFilters, ProductListResponse } from '@/context/product/domain/product.repository';
 
 interface GetAllProductsUseCaseParams {
@@ -16,6 +16,10 @@ interface GetAllProductsUseCaseParams {
 @Injectable()
 export class GetAllProductsUseCase {
   constructor(private readonly productRepository: ProductRepository) {}
+
+  async getProduct(id: string){
+    return await this.productRepository.findByUser(id);
+  }
 
   async run({
     page = 1,

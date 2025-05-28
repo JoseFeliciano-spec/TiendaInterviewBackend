@@ -14,10 +14,307 @@ export class InMemoryProductRepository extends ProductRepository {
     super();
   }
 
-   async findById(id: string): Promise<Product | null> {
+  async findByUser(idUser: string): Promise<{
+    success: boolean;
+    data?: {
+      transactions: any[];
+      products: any[];
+      summary: {
+        totalTransactions: number;
+        totalProducts: number;
+        totalSpent: number; // En pesos
+        byStatus: Record<string, number>;
+        lastPurchase?: Date;
+      };
+    };
+    message: string;
+    statusCode: number;
+  }> {
+    try {
+      this.logger.log(
+        `🔍 Finding optimized transactions with products for user: ${idUser}`,
+      );
+
+      // ✅ Query ultra-optimizada según search results [3], [6], [7] - Una sola consulta con todos los includes
+      const [userTransactions, totalCount] = await this.prisma.$transaction([
+        // Query principal optimizada: TransactionItems como punto de partida según search result [7]
+        this.prisma.transaction.findMany({
+          where: {
+            OR: [
+              { userId: idUser }, // Usuario registrado según schema
+              { customerEmail: idUser }, // Usuario guest según test de Wompi del search result [1]
+            ],
+          },
+          select: {
+            // ✅ Select específico en lugar de include completo según search result [7] para performance
+            id: true,
+            reference: true,
+            status: true,
+            amount: true,
+            subtotal: true,
+            baseFee: true,
+            deliveryFee: true,
+            wompiTransactionId: true,
+            paymentMethod: true,
+            customerName: true,
+            customerEmail: true,
+            customerPhone: true,
+            customerDocument: true,
+            createdAt: true,
+            updatedAt: true,
+
+            // ✅ Usuario registrado (select específico según search result [7])
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+
+            // ✅ Delivery info optimizada según schema
+            delivery: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                address: true,
+                city: true,
+                department: true,
+                status: true,
+                estimatedDate: true,
+                deliveredAt: true,
+                trackingCode: true,
+              },
+            },
+
+            // ✅ TransactionItems con productos - nested include optimizado según search results [3], [7]
+            transactionItems: {
+              select: {
+                id: true,
+                quantity: true,
+                unitPrice: true,
+                totalPrice: true,
+                productId: true,
+
+                // ✅ Producto con campos específicos según search result [7]
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    price: true,
+                    originalPrice: true,
+                    image: true,
+                    category: true,
+                    stock: true,
+                    rating: true,
+                    reviews: true,
+                    tags: true,
+                    featured: true,
+                    discount: true,
+                    sku: true,
+                    isActive: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc', // ✅ Más recientes primero según search result [3]
+          },
+        }),
+
+        // Count optimizado según search result [4]
+        this.prisma.transaction.count({
+          where: {
+            OR: [{ userId: idUser }, { customerEmail: idUser }],
+          },
+        }),
+      ]);
+
+      this.logger.log(
+        `✅ Found ${userTransactions.length} transactions for user: ${idUser}`,
+      );
+
+      if (userTransactions.length === 0) {
+        return {
+          success: true,
+          data: {
+            transactions: [],
+            products: [],
+            summary: {
+              totalTransactions: 0,
+              totalProducts: 0,
+              totalSpent: 0,
+              byStatus: {},
+            },
+          },
+          message: 'No transactions found for this user',
+          statusCode: 200,
+        };
+      }
+
+      // ✅ Procesamiento optimizado en memoria según especificaciones del test de Wompi del search result [1]
+      const uniqueProductsMap = new Map();
+      const statusCounts: Record<string, number> = {};
+      let totalSpent = 0;
+      let lastPurchaseDate: Date | undefined;
+
+      // ✅ Mapear transacciones con productos de forma optimizada
+      const processedTransactions = userTransactions.map((transaction) => {
+        // Calcular totales según especificaciones del test
+        const transactionAmount = Number(transaction.amount) / 100; // Centavos a pesos
+        totalSpent += transactionAmount;
+
+        // Contar por status para estadísticas
+        statusCounts[transaction.status] =
+          (statusCounts[transaction.status] || 0) + 1;
+
+        // Fecha de última compra
+        if (!lastPurchaseDate || transaction.createdAt > lastPurchaseDate) {
+          lastPurchaseDate = transaction.createdAt;
+        }
+
+        // ✅ Procesar items optimizado - evitando loops anidados según search result [7]
+        const processedItems = transaction.transactionItems.map((item) => {
+          const product = item.product;
+
+          // ✅ Agregar producto único al Map de forma eficiente
+          if (product && !uniqueProductsMap.has(item.productId)) {
+            uniqueProductsMap.set(item.productId, {
+              // ✅ Mapeo directo sin conversión innecesaria
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              price: Number(product.price) / 100, // En pesos para display
+              originalPrice: product.originalPrice
+                ? Number(product.originalPrice) / 100
+                : null,
+              image: product.image,
+              category: product.category,
+              stock: product.stock,
+              rating: product.rating,
+              reviews: product.reviews,
+              tags: product.tags,
+              featured: product.featured,
+              discount: product.discount,
+              sku: product.sku,
+              isActive: product.isActive,
+              createdAt: product.createdAt,
+              updatedAt: product.updatedAt,
+
+              // ✅ Datos de compra según especificaciones del test
+              purchaseHistory: {
+                quantity: item.quantity,
+                unitPrice: Number(item.unitPrice) / 100, // En pesos
+                totalPrice: Number(item.totalPrice) / 100, // En pesos
+                purchaseDate: transaction.createdAt,
+                transactionReference: transaction.reference,
+                transactionStatus: transaction.status,
+              },
+            });
+          }
+
+          // ✅ Retornar item procesado según search result [1]
+          return {
+            id: item.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: Number(item.unitPrice) / 100, // En pesos
+            totalPrice: Number(item.totalPrice) / 100, // En pesos
+            product: {
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              price: Number(product.price) / 100, // En pesos
+              image: product.image,
+              category: product.category,
+              stock: product.stock,
+              rating: product.rating,
+              sku: product.sku,
+              isActive: product.isActive,
+            },
+          };
+        });
+
+        // ✅ Retornar transacción completa según especificaciones del test
+        return {
+          id: transaction.id,
+          reference: transaction.reference,
+          status: transaction.status,
+          amount: transactionAmount, // En pesos
+          subtotal: Number(transaction.subtotal) / 100, // En pesos
+          baseFee: Number(transaction.baseFee) / 100, // En pesos
+          deliveryFee: Number(transaction.deliveryFee) / 100, // En pesos
+          wompiTransactionId: transaction.wompiTransactionId,
+          paymentMethod: transaction.paymentMethod,
+
+          // Datos del cliente
+          customerName: transaction.customerName,
+          customerEmail: transaction.customerEmail,
+          customerPhone: transaction.customerPhone,
+          customerDocument: transaction.customerDocument,
+
+          // Usuario registrado (si existe)
+          user: transaction.user,
+
+          // Delivery optimizado
+          delivery: transaction.delivery,
+
+          // Items procesados
+          transactionItems: processedItems,
+
+          // Fechas
+          createdAt: transaction.createdAt,
+          updatedAt: transaction.updatedAt,
+        };
+      });
+
+      // ✅ Extraer productos únicos del Map de forma eficiente
+      const uniqueProducts = Array.from(uniqueProductsMap.values());
+
+      this.logger.log(
+        `📊 Optimized summary: ${uniqueProducts.length} unique products, ${totalCount} transactions, $${totalSpent.toFixed(2)} spent`,
+      );
+      this.logger.log(`📈 Status breakdown: ${JSON.stringify(statusCounts)}`);
+
+      return {
+        success: true,
+        data: {
+          transactions: processedTransactions,
+          products: uniqueProducts,
+          summary: {
+            totalTransactions: totalCount,
+            totalProducts: uniqueProducts.length,
+            totalSpent,
+            byStatus: statusCounts,
+            lastPurchase: lastPurchaseDate,
+          },
+        },
+        message: `Found ${totalCount} transactions with ${uniqueProducts.length} unique products`,
+        statusCode: 200,
+      };
+    } catch (error) {
+      this.logger.error(
+        `❌ Error in optimized findByUser for ${idUser}: ${error.message}`,
+      );
+      return {
+        success: false,
+        message: `Error finding user data: ${error.message}`,
+        statusCode: 500,
+      };
+    }
+  }
+
+  async findById(id: string): Promise<Product | null> {
     try {
       const product = await this.prisma.product.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!product || !product.isActive) {
@@ -25,14 +322,16 @@ export class InMemoryProductRepository extends ProductRepository {
         return null;
       }
 
-      this.logger.log(`✅ Product found: ${product.name} - Stock: ${product.stock} - Price: ${Number(product.price) / 100} pesos`);
+      this.logger.log(
+        `✅ Product found: ${product.name} - Stock: ${product.stock} - Price: ${Number(product.price) / 100} pesos`,
+      );
       return this.mapPrismaToProduct(product);
     } catch (error) {
       this.logger.error(`❌ Error finding product by ID: ${error.message}`);
       throw new BadRequestException(`Error finding product: ${error.message}`);
     }
   }
-  
+
   findBySku(sku: string): Promise<Product | null> {
     throw new Error('Method not implemented.');
   }
@@ -44,17 +343,21 @@ export class InMemoryProductRepository extends ProductRepository {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id },
-        select: { stock: true, isActive: true, name: true }
+        select: { stock: true, isActive: true, name: true },
       });
 
       if (!product || !product.isActive) {
-        this.logger.log(`❌ Product not found or inactive for stock check: ${id}`);
+        this.logger.log(
+          `❌ Product not found or inactive for stock check: ${id}`,
+        );
         return false;
       }
 
       const hasStock = product.stock >= quantity;
-      this.logger.log(`📊 Stock check: ${product.name} - Required: ${quantity}, Available: ${product.stock}, Has stock: ${hasStock}`);
-      
+      this.logger.log(
+        `📊 Stock check: ${product.name} - Required: ${quantity}, Available: ${product.stock}, Has stock: ${hasStock}`,
+      );
+
       return hasStock;
     } catch (error) {
       this.logger.error(`❌ Error checking stock: ${error.message}`);

@@ -13,6 +13,7 @@ import { WompiService } from '@/context/shared/wompi/wompi.service';
 
 export interface CreateTransactionRequest {
   productId: string;
+  userId: string;
   quantity: number;
   customerEmail: string;
   customerName?: string; // Received by use case, but not stored on Transaction entity
@@ -79,6 +80,7 @@ export class TransactionUseCases {
 
       const transactionEntityData = {
         productId: request.productId,
+        userId: request?.userId,
         productName: product.name,
         quantity: request.quantity,
         productPrice: product.price, // Price in cents from product
