@@ -19,6 +19,6 @@ import { ProductController } from './http-api/v1/get-all-products.ts/get-all.pro
       useExisting: InMemoryProductRepository,
     },
   ],
-  exports: [GetAllProductsUseCase, SearchProductsUseCase],
+  exports: [GetAllProductsUseCase, SearchProductsUseCase, ProductsModule, ProductRepository],
 })
 export class ProductsModule {}

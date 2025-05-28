@@ -47,7 +47,7 @@ export class SearchProductsUseCase {
       // Crear filtros
       const filters: ProductFilters = {
         search: searchTerm,
-        inStock: true // Solo productos en stock según test de Wompi
+        inStock: true // Solo productos en stock según test de la Tienda
       };
 
       // Agregar filtros opcionales

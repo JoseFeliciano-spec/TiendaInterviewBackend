@@ -25,6 +25,11 @@ export class Product {
     return new Product(primitives);
   }
 
+
+  hasStock(quantity: number): boolean {
+    return this.stock >= quantity;
+  }
+
   toPrimitives(): PrimitiveProduct {
     return {
       id: this.attributes.id,

@@ -5,6 +5,7 @@ import { AuthModule } from '@/context/auth/infrastructure/auth.module';
 import { AuthGuard } from '@/context/shared/guards/auth.guard';
 import { PrismaModule } from '@/context/shared/database/prisma.module';
 import { ProductsModule } from '@/context/product/infrastructure/products.module';
+import { TransactionModule } from './context/transaction/infrastructure/transaction.module';
 @Module({
   providers: [AuthGuard],
   imports: [
@@ -17,6 +18,7 @@ import { ProductsModule } from '@/context/product/infrastructure/products.module
     AuthModule,
     PrismaModule,
     ProductsModule,
+    TransactionModule
   ],
 })
 export class AppModule {}
